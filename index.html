@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rouri's Desktop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;font-family:Tahoma,Arial,sans-serif;cursor:default;}
+    body{filter:saturate(.97) contrast(1.01);}
+    .bg{position:fixed;inset:0;background-image:url('images/bg.jpg');background-size:cover;background-position:center;background-repeat:no-repeat;}
+
+    /* ---- Retro Screen FX ---- */
+    .screen-noise,
+    .screen-scanlines,
+    .screen-vignette{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+    }
+    .screen-noise{
+      z-index:300;
+      opacity:.04;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.9) 0 1px, transparent 1.2px),
+        radial-gradient(circle, rgba(0,0,0,.85) 0 1px, transparent 1.2px);
+      background-size: 8px 8px, 11px 11px;
+      background-position: 0 0, 4px 5px;
+      mix-blend-mode: overlay;
+    }
+    .screen-scanlines{
+      z-index:301;
+      opacity:.028;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,.10) 0px,
+          rgba(255,255,255,.10) 1px,
+          rgba(0,0,0,.35) 2px,
+          rgba(0,0,0,.35) 3px
+        );
+    }
+    .screen-vignette{
+      z-index:302;
+      background:
+        radial-gradient(
+          ellipse at center,
+          rgba(0,0,0,0) 52%,
+          rgba(0,0,0,.08) 76%,
+          rgba(0,0,0,.20) 100%
+        );
+    }
+
+    .greeting{
+      position:absolute;top:5vh;right:7vw;
+      font-family:'Caveat',cursive;font-size:clamp(2.5rem,5vw,4.5rem);
+      color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.3),0 0 30px rgba(255,255,255,.4);
+      letter-spacing:2px;animation:fadeIn 1s ease forwards;opacity:0;z-index:10;pointer-events:none;
+    }
+    @keyframes fadeIn{
+      from{opacity:0;transform:translateY(-10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    /* ---- Desktop Icons ---- */
+    .desktop-icons{position:absolute;inset:0;z-index:10;}
+    .icon{
+      position:absolute;display:flex;flex-direction:column;align-items:center;gap:8px;
+      cursor:pointer;width:104px;padding:8px;border-radius:4px;user-select:none;
+    }
+    .icon:hover{background:rgba(49,106,197,.45);outline:1px dotted rgba(255,255,255,.8);}
+    .icon.selected{background:rgba(49,106,197,.6);}
+    .icon-img{font-size:56px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));line-height:1;}
+    .icon-label{
+      font-size:14px;color:#fff;text-align:center;line-height:1.3;
+      text-shadow:1px 1px 3px #000,-1px -1px 3px #000,1px -1px 3px #000,-1px 1px 3px #000;
+      word-break:break-word;
+    }
+
+    #icon-music{left:30px;top:30px;}
+    #icon-yt{left:30px;top:160px;}
+    #icon-bili{left:30px;top:290px;}
+    #icon-profile{left:30px;top:420px;}
+    #icon-computer{left:160px;top:30px;}
+    #icon-docs{left:160px;top:160px;}
+    #icon-bin{left:160px;top:290px;}
+    #icon-about{left:160px;top:420px;}
+
+    /* ---- Common Window ---- */
+    .win{
+      position:absolute;display:none;z-index:100;flex-direction:column;user-select:none;
+      border-radius:3px 3px 0 0;overflow:hidden;
+      box-shadow:
+        2px 2px 0 rgba(0,0,0,.64),
+        5px 5px 0 rgba(0,0,0,.28),
+        10px 10px 18px rgba(0,0,0,.40);
+    }
+    .win.visible{display:flex;animation:winPop .15s cubic-bezier(.2,.8,.3,1.1);}
+    .win.maximized{
+      position:fixed!important;left:0!important;top:0!important;
+      width:100vw!important;height:calc(100vh - 30px)!important;border-radius:0;box-shadow:none;
+    }
+    .win.maximized .ie-content,
+    .win.maximized .profile-content{flex:1;height:auto;}
+    .win.maximized .ie-titlebar{cursor:default;}
+
+    @keyframes winPop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+
+    .ie-titlebar{
+      background:linear-gradient(to bottom,#6ab0e8 0%,#4a90d0 5%,#2268b8 15%,#1458a8 50%,#1060a8 51%,#1870b8 85%,#2282c8 100%);
+      padding:3px 5px 4px 7px;display:flex;align-items:center;justify-content:space-between;
+      cursor:move;border-bottom:1px solid #0a4898;
+    }
+    .wmp-title-left{display:flex;align-items:center;gap:5px;}
+    .wmp-title-text{font-size:12px;font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);}
+    .wmp-title-btns{display:flex;gap:2px;}
+    .tb{width:22px;height:20px;border-radius:3px;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:filter .1s;}
+    .tb-min,.tb-max{background:linear-gradient(to bottom,#6ab0e8,#3a88cc);color:#fff;border:1px solid rgba(255,255,255,.3);}
+    .tb-close{background:linear-gradient(to bottom,#e05858,#b01818);color:#fff;border:1px solid rgba(255,255,255,.2);}
+    .tb:hover{filter:brightness(1.25);}
+    .tb:active{filter:brightness(.85);}
+    .ie-menubar{background:#f0ece0;border-bottom:1px solid #c0bca8;padding:1px 4px;display:flex;}
+    .ie-menubar span{font-size:11px;color:#000;padding:2px 7px;cursor:pointer;font-family:Tahoma,sans-serif;}
+    .ie-menubar span:hover{background:#316ac5;color:#fff;}
+    .ie-toolbar{background:linear-gradient(to bottom,#f4f0e4,#e4e0d4);border-bottom:1px solid #c0bca8;padding:2px 4px;display:flex;align-items:center;gap:1px;flex-wrap:wrap;}
+    .ie-nbtn{height:24px;padding:0 5px;background:transparent;border:1px solid transparent;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;font-family:Tahoma,sans-serif;color:#222;}
+    .ie-nbtn:hover{background:linear-gradient(to bottom,#fff,#d8e0f0);border-color:#8090b8;}
+    .ie-nbtn .ico{font-size:13px;line-height:1;}
+    .ie-nbtn .lbl{font-size:10px;color:#444;}
+    .ie-tbsep{width:1px;height:20px;background:#c0bca8;margin:0 2px;}
+    .ie-addrbar{background:#e8e4d8;border-bottom:1px solid #c0bca8;padding:2px 5px;display:flex;align-items:center;gap:4px;}
+    .ie-addr-lbl{font-size:11px;color:#333;font-family:Tahoma,sans-serif;white-space:nowrap;}
+    .ie-addr-input{flex:1;height:20px;border:2px inset #aaa;background:#fff;font-size:11px;font-family:Tahoma,sans-serif;padding:0 3px;outline:none;}
+    .ie-go-btn{width:22px;height:20px;background:linear-gradient(to bottom,#f0f4ff,#d0d8ec);border:1px solid #8090b0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;}
+    .ie-go-btn:hover{background:linear-gradient(to bottom,#fff,#dde4f8);}
+    .ie-content{height:400px;overflow:hidden;background:#fff;}
+    .ie-page{height:100%;overflow-y:auto;font-family:Arial,sans-serif;}
+    .ie-statusbar{background:linear-gradient(to bottom,#e0dcd0,#d4d0c4);border-top:1px solid #c0bca8;padding:1px 8px;display:flex;align-items:center;min-height:20px;}
+    .ie-stxt{font-size:11px;color:#333;font-family:Tahoma,sans-serif;flex:1;}
+    .ie-szone{font-size:11px;color:#333;font-family:Tahoma,sans-serif;padding:0 6px;border-left:1px solid #c0bca8;}
+
+    /* ---- WMP ---- */
+    .wmp{
+      position:absolute;width:660px;display:none;z-index:100;top:60px;left:140px;
+      user-select:none;background:#000;border:1px solid #000;border-radius:6px 6px 0 0;
+      box-shadow:
+        2px 2px 0 rgba(0,0,0,.68),
+        5px 5px 0 rgba(0,0,0,.30),
+        10px 10px 18px rgba(0,0,0,.42);
+      flex-direction:column;
+    }
+    .wmp.visible{display:flex;animation:winPop .15s cubic-bezier(.2,.8,.3,1.1);}
+    .wmp.maximized{position:fixed!important;left:0!important;top:0!important;width:100vw!important;height:calc(100vh - 30px)!important;border-radius:0;box-shadow:none;}
+    .wmp.maximized .wmp-body{flex:1;height:auto;}
+    .wmp.maximized .wmp-title{border-radius:0;cursor:default;}
+    .wmp-title{
+      background:linear-gradient(to bottom,#6ab0e8 0%,#4a90d0 5%,#2268b8 15%,#1458a8 50%,#1060a8 51%,#1870b8 85%,#2282c8 100%);
+      border-radius:5px 5px 0 0;padding:3px 5px 4px 7px;
+      display:flex;align-items:center;justify-content:space-between;cursor:move;border-bottom:1px solid #0a4898;
+    }
+    .wmp-menu{background:#e8e4d8;border-bottom:1px solid #aaa;padding:2px 6px;display:flex;gap:2px;}
+    .wmp-menu span{font-size:11px;color:#000;padding:2px 8px;border-radius:2px;cursor:pointer;}
+    .wmp-menu span:hover{background:#316ac5;color:#fff;}
+    .wmp-body{display:flex;height:360px;}
+    .wmp-sidebar{
+      width:90px;background:linear-gradient(to bottom,#6090c8 0%,#3a6098 40%,#2a5088 100%);
+      display:flex;flex-direction:column;border-right:1px solid #1a4070;
+    }
+    .sidebar-arrow{text-align:center;color:#90c0ff;font-size:16px;padding:4px;cursor:pointer;background:rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.1);}
+    .sidebar-arrow.bottom{border-top:1px solid rgba(255,255,255,.1);border-bottom:none;margin-top:auto;}
+    .sidebar-nav{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+    .snav{padding:10px 8px 10px 14px;font-size:11px;font-weight:bold;color:#d0e8ff;cursor:pointer;line-height:1.3;border-bottom:1px solid rgba(255,255,255,.08);transition:background .1s;}
+    .snav:hover{background:rgba(255,255,255,.15);}
+    .snav.active{background:rgba(255,255,255,.22);color:#fff;}
+    .wmp-logo{padding:8px;display:flex;flex-direction:column;align-items:center;gap:2px;border-top:1px solid rgba(255,255,255,.1);}
+    .wmp-logo-ball{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9900,#cc4400 60%,#882200);border:2px solid #ff8800;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;}
+    .wmp-logo-text{font-size:9px;color:#90c0ff;text-align:center;line-height:1.2;}
+    .wmp-main{flex:1;display:flex;flex-direction:column;background:#1a1a2a;}
+    .wmp-topbar{background:linear-gradient(to bottom,#3a3a4a,#282838);padding:4px 10px;display:flex;align-items:center;border-bottom:1px solid #111;}
+    .topbar-title{flex:1;font-size:11px;color:#90a8c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .wmp-view{flex:1;display:flex;overflow:hidden;}
+    .np-view{flex:1;display:flex;flex-direction:column;background:#000;position:relative;}
+    .np-art{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:#000;}
+    .np-art img{max-width:100%;max-height:100%;object-fit:contain;}
+    .np-art-placeholder{display:flex;flex-direction:column;align-items:center;gap:10px;color:#333;}
+    .np-art-placeholder .big-note{font-size:56px;opacity:.35;}
+    .np-track-info{padding:6px 12px 8px;background:#000;}
+    .np-artist{font-size:11px;color:#888;margin-top:1px;}
+    .np-title{font-size:17px;font-weight:bold;color:#fff;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .np-playlist{width:210px;background:#000;border-left:1px solid #2a2a3a;display:flex;flex-direction:column;}
+    .np-pl-header{background:linear-gradient(to bottom,#3060a0,#204880);padding:5px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1a3060;}
+    .np-pl-title{font-size:12px;color:#fff;font-weight:bold;}
+    .np-pl-items{flex:1;overflow-y:auto;}
+    .np-pl-items::-webkit-scrollbar{width:5px;}
+    .np-pl-items::-webkit-scrollbar-track{background:#0a0a1a;}
+    .np-pl-items::-webkit-scrollbar-thumb{background:#3a5a8a;border-radius:3px;}
+    .pl-item{display:flex;align-items:center;padding:5px 8px 5px 6px;font-size:11px;color:#7090b8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);gap:5px;transition:background .1s;}
+    .pl-item:hover{background:rgba(255,255,255,.08);color:#aac0e0;}
+    .pl-item.active{background:rgba(50,100,200,.25);color:#40c0ff;font-weight:bold;}
+    .pl-item .pl-plus{color:#00a000;font-size:13px;flex-shrink:0;}
+    .pl-item.active .pl-plus{color:#00d000;}
+    .pl-item-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .pl-item-dur{color:#446080;font-size:10px;flex-shrink:0;}
+    .pl-item.active .pl-item-dur{color:#2080a0;}
+    .na-view{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;color:#555;gap:10px;}
+    .na-icon{font-size:48px;opacity:.3;}
+    .na-text{font-size:14px;color:#444;}
+    .na-sub{font-size:11px;color:#333;}
+    .wmp-status{background:linear-gradient(to bottom,#2a2a2a,#1a1a1a);border-top:1px solid #444;padding:3px 12px;display:flex;align-items:center;justify-content:space-between;}
+    .status-text{font-size:11px;color:#40c040;font-weight:bold;}
+    .status-time{font-size:11px;color:#40c040;font-family:monospace;font-weight:bold;}
+    .wmp-ctrl{background:linear-gradient(to bottom,#3a3a4a,#222230);border-top:1px solid #111;padding:6px 10px 8px;}
+    .ctrl-progress{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+    .prog-bar{flex:1;height:7px;background:#2a2a3a;border-radius:4px;cursor:pointer;position:relative;border:1px solid #444;overflow:visible;}
+    .prog-fill{height:100%;background:linear-gradient(to right,#20a040,#50e070);border-radius:4px;width:0%;position:relative;pointer-events:none;transition:width .4s linear;}
+    .prog-fill::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:#60ff80;box-shadow:0 0 5px rgba(0,255,60,.7);}
+    .ctrl-time{font-size:11px;color:#888;font-family:monospace;white-space:nowrap;}
+    .ctrl-row{display:flex;align-items:center;gap:0;}
+    .ctrl-main-area{flex:1;background:linear-gradient(to bottom,#9ab0c8 0%,#788898 40%,#606878 60%,#707888 100%);border-radius:20px;padding:5px 10px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #506070;box-shadow:inset 0 1px 2px rgba(255,255,255,.3),0 2px 4px rgba(0,0,0,.4);}
+    .cbtn{width:28px;height:26px;border-radius:14px;background:linear-gradient(to bottom,#b0c8e0,#7090a8);border:1px solid #506080;color:#202838;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .1s;box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.4);}
+    .cbtn:hover{background:linear-gradient(to bottom,#c0d8f0,#8090b8);color:#000;}
+    .cbtn:active{filter:brightness(.85);transform:scale(.95);}
+    .cbtn.play{width:36px;height:36px;border-radius:50%;font-size:18px;background:radial-gradient(circle at 35% 30%,#d0e8ff,#6090c8 60%,#3060a0);border:2px solid #4070b0;color:#fff;box-shadow:inset 0 2px 2px rgba(255,255,255,.4),0 3px 6px rgba(0,0,0,.5);}
+    .cbtn.play:hover{background:radial-gradient(circle at 35% 30%,#e0f0ff,#7090d8 60%,#4070b0);}
+    .ctrl-extras{display:flex;align-items:center;gap:6px;margin-left:8px;}
+    .mute-btn{font-size:14px;color:#708090;cursor:pointer;}
+    .mute-btn:hover{color:#aac0d0;}
+    .vol-track{width:60px;height:5px;background:#2a2a3a;border-radius:3px;cursor:pointer;border:1px solid #444;position:relative;}
+    .vol-fill{height:100%;background:linear-gradient(to right,#20a040,#50e070);border-radius:3px;width:75%;pointer-events:none;}
+
+    /* ---- Browser/Profile windows ---- */
+    .bwin{width:760px;}
+    .profile-win{width:560px;}
+    .profile-content{
+      height:350px;background:linear-gradient(to bottom,#f7f4ec,#ece7db);
+      padding:18px;overflow:auto;
+    }
+    .profile-shell{
+      background:#fff;border:1px solid #b9b4a8;box-shadow:inset 0 1px 0 rgba(255,255,255,.65);
+      min-height:100%;display:flex;padding:18px;gap:18px;
+    }
+    .profile-left{
+      width:170px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:12px;padding-right:12px;border-right:1px solid #d9d2c5;
+    }
+    .profile-avatar-wrap{
+      width:120px;height:120px;padding:4px;background:linear-gradient(to bottom,#ffffff,#e6eef8);
+      border:1px solid #8ca7c4;box-shadow:0 1px 2px rgba(0,0,0,.15);
+    }
+    .profile-avatar{width:100%;height:100%;object-fit:cover;display:block;background:#dfe7f2;}
+    .profile-badge{
+      width:100%;text-align:center;padding:8px 10px;font-size:11px;color:#184a87;
+      background:linear-gradient(to bottom,#f9fcff,#dce9f8);border:1px solid #9eb9d7;line-height:1.5;
+    }
+    .profile-right{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;}
+    .profile-name{font-size:28px;font-weight:bold;color:#1c4587;margin-bottom:4px;font-family:Tahoma,Arial,sans-serif;}
+    .profile-role{font-size:14px;color:#5b6570;margin-bottom:18px;font-weight:bold;}
+    .profile-section{border:1px solid #cfc8ba;background:#faf8f3;}
+    .profile-section-title{
+      padding:7px 10px;font-size:12px;font-weight:bold;color:#0b3f7a;
+      background:linear-gradient(to bottom,#eef5fd,#d7e7fa);border-bottom:1px solid #c6d7ea;
+    }
+    .profile-fields{padding:10px 12px;display:flex;flex-direction:column;gap:10px;}
+    .profile-row{display:grid;grid-template-columns:90px 1fr;gap:10px;align-items:start;font-size:13px;line-height:1.5;color:#222;}
+    .profile-key{color:#4f5964;font-weight:bold;}
+    .profile-value{min-width:0;word-break:break-word;}
+    .profile-link{color:#0b56a5;text-decoration:underline;cursor:pointer;}
+    .profile-link:hover{color:#d14a00;}
+
+    /* ---- Explorer style content ---- */
+    .xp-pane{display:flex;height:100%;}
+    .xp-side{
+      width:170px;background:linear-gradient(to bottom,#dce8f7,#c9dbf2 55%,#b8cfea);
+      border-right:1px solid #9fb7d7;padding:12px;
+      font-family:Tahoma,Arial,sans-serif;
+    }
+    .xp-side-box{
+      background:#f9fcff;border:1px solid #9eb9d7;margin-bottom:12px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+    }
+    .xp-side-title{
+      background:linear-gradient(to bottom,#eef5fd,#d7e7fa);
+      color:#0b3f7a;font-size:12px;font-weight:bold;padding:6px 8px;border-bottom:1px solid #c6d7ea;
+    }
+    .xp-side-body{padding:8px 9px;font-size:11px;line-height:1.6;color:#3f4d5c;}
+    .xp-main{flex:1;background:#fff;padding:14px;overflow:auto;}
+    .xp-heading{font-size:22px;color:#1a4f92;font-weight:bold;margin-bottom:14px;font-family:Tahoma,Arial,sans-serif;}
+    .xp-list{display:flex;flex-direction:column;gap:6px;}
+    .xp-item{
+      display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid transparent;
+      border-radius:2px;cursor:default;font-size:13px;color:#222;
+    }
+    .xp-item:hover{background:#eef5ff;border-color:#c5d7ef;}
+    .xp-icon{font-size:22px;flex-shrink:0;}
+    .xp-sub{font-size:11px;color:#66717d;}
+    .xp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;}
+    .xp-card{
+      border:1px solid #ccd7e5;background:#fbfdff;padding:10px;
+    }
+    .xp-card-title{font-size:13px;font-weight:bold;color:#204c86;margin-bottom:4px;}
+    .xp-card-sub{font-size:11px;color:#66717d;line-height:1.5;}
+
+    /* ---- Dialog ---- */
+    .dialog{
+      position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+      width:360px;display:none;z-index:900;background:#ece9d8;border:1px solid #0a246a;
+      box-shadow:2px 2px 0 rgba(0,0,0,.55), 7px 7px 18px rgba(0,0,0,.38);
+    }
+    .dialog.visible{display:block;animation:winPop .14s ease;}
+    .dialog-title{
+      height:28px;padding:0 8px;display:flex;align-items:center;justify-content:space-between;
+      color:#fff;font-size:12px;font-weight:bold;
+      background:linear-gradient(to right,#0a246a,#3a6ea5);
+    }
+    .dialog-body{
+      display:flex;gap:12px;padding:18px 16px 12px 16px;align-items:flex-start;
+      font-size:13px;color:#222;line-height:1.5;
+    }
+    .dialog-icon{font-size:28px;line-height:1;}
+    .dialog-actions{
+      display:flex;justify-content:center;gap:8px;padding:0 0 14px 0;
+    }
+    .xp-btn{
+      min-width:74px;height:24px;padding:0 12px;font-size:12px;font-family:Tahoma,Arial,sans-serif;
+      border:1px solid #7f9db9;background:linear-gradient(to bottom,#ffffff,#dfe8f6);cursor:pointer;
+    }
+    .xp-btn:hover{filter:brightness(1.03);}
+    .xp-btn:active{filter:brightness(.92);}
+
+    /* ---- Balloon ---- */
+    .balloon{
+      position:fixed;right:18px;bottom:40px;width:250px;z-index:850;display:none;
+      background:linear-gradient(to bottom,#fffde8,#fff2a8);
+      border:1px solid #c7b25a;box-shadow:2px 2px 0 rgba(0,0,0,.22), 6px 6px 14px rgba(0,0,0,.26);
+      font-family:Tahoma,Arial,sans-serif;border-radius:4px;
+    }
+    .balloon.visible{display:block;animation:balloonUp .28s ease;}
+    @keyframes balloonUp{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    .balloon-head{
+      display:flex;align-items:center;justify-content:space-between;padding:7px 8px 4px 10px;
+      font-size:12px;font-weight:bold;color:#5d4b00;
+    }
+    .balloon-body{
+      padding:0 10px 10px 10px;font-size:12px;color:#5a5200;line-height:1.5;
+    }
+    .balloon-close{cursor:pointer;font-weight:bold;color:#7b6900;}
+
+    /* ---- Taskbar ---- */
+    .taskbar{
+      position:fixed;bottom:0;left:0;right:0;height:30px;z-index:950;display:flex;align-items:center;
+      background:linear-gradient(to bottom,#245edc 0%,#1a52c0 4%,#1a4ebc 6%,#1848b4 50%,#1848b4 51%,#1a50be 100%);
+      border-top:2px solid #0c3898;box-shadow:inset 0 1px 0 rgba(255,255,255,.22);user-select:none;
+    }
+    .start-btn{
+      height:100%;display:flex;align-items:center;gap:5px;padding:0 14px 0 8px;
+      background:linear-gradient(to bottom,#62d350 0%,#46bc34 10%,#38aa26 50%,#38aa26 51%,#48bc36 90%,#60d04c 100%);
+      border-radius:0 14px 14px 0;border:1px solid #186010;border-left:none;cursor:pointer;margin-right:4px;
+      box-shadow:1px 0 5px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.3);flex-shrink:0;
+    }
+    .start-btn:hover{filter:brightness(1.1);}
+    .start-btn:active{filter:brightness(.88);box-shadow:1px 0 2px rgba(0,0,0,.4),inset 0 2px 3px rgba(0,0,0,.22);}
+    .start-logo{width:16px;height:16px;flex-shrink:0;}
+    .start-text{font-size:13px;font-weight:bold;font-style:italic;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.55);font-family:'Franklin Gothic Medium',Tahoma,Arial,sans-serif;white-space:nowrap;}
+    .tb-sep{width:1px;height:20px;background:rgba(0,0,60,.5);box-shadow:1px 0 0 rgba(255,255,255,.14);margin:0 3px;flex-shrink:0;}
+    .tbar-btns{flex:1;display:flex;align-items:center;gap:2px;padding:0 2px;overflow:hidden;min-width:0;}
+    .tbar-btn{
+      height:22px;min-width:110px;max-width:180px;background:linear-gradient(to bottom,#3272ca,#1a5ab2);
+      border:1px solid #0a3a8a;border-top-color:#4882da;border-radius:2px;color:#fff;font-size:11px;display:flex;
+      align-items:center;gap:4px;padding:0 6px;cursor:pointer;overflow:hidden;text-shadow:0 1px 1px rgba(0,0,0,.5);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .tbar-btn:hover{background:linear-gradient(to bottom,#4282da,#2268c2);}
+    .tbar-btn.pressed{background:linear-gradient(to bottom,#1a4a9a,#2062b2);border-top-color:#0a3282;box-shadow:inset 1px 1px 3px rgba(0,0,0,.38);}
+    .tbar-btn-icon{font-size:13px;flex-shrink:0;}
+    .tbar-btn-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+    .systray{
+      display:flex;align-items:center;height:100%;padding:0 6px 0 4px;background:linear-gradient(to bottom,#1252aa,#1a5abe);
+      border-left:1px solid #0a3a8a;box-shadow:inset 1px 0 0 rgba(255,255,255,.1);flex-shrink:0;gap:4px;
+    }
+    .tray-icon{font-size:12px;color:#fff;opacity:.92;}
+    .systray-clock{font-size:11px;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.4);font-family:Tahoma,Arial,sans-serif;padding:1px 2px;white-space:nowrap;cursor:default;}
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="screen-noise"></div>
+  <div class="screen-scanlines"></div>
+  <div class="screen-vignette"></div>
+
+  <div class="greeting">Hi, I am Rouri 🐾</div>
+
+  <div class="desktop-icons">
+    <div class="icon" id="icon-music" ondblclick="openWmp()" onclick="selectIcon(this)">
+      <div class="icon-img">🎵</div>
+      <div class="icon-label">Listen To My<br>Musics</div>
+    </div>
+
+    <div class="icon" id="icon-yt" ondblclick="openBrowser('yt')" onclick="selectIcon(this)">
+      <div class="icon-img" style="font-size:0;display:flex;justify-content:center;">
+        <svg width="54" height="40" viewBox="0 0 44 32">
+          <rect width="44" height="32" rx="7" fill="#ff0000"/>
+          <polygon points="17,8 17,24 30,16" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="icon-label">YouTube</div>
+    </div>
+
+    <div class="icon" id="icon-bili" ondblclick="openBrowser('bili')" onclick="selectIcon(this)">
+      <div class="icon-img" style="font-size:0;display:flex;justify-content:center;">
+        <svg width="54" height="54" viewBox="0 0 44 44">
+          <rect width="44" height="44" rx="9" fill="#00aeec"/>
+          <line x1="14" y1="15" x2="10" y2="5" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <line x1="30" y1="15" x2="34" y2="5" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <rect x="7" y="14" width="30" height="22" rx="5" fill="#fff"/>
+          <circle cx="16" cy="25" r="4.5" fill="#00aeec"/>
+          <circle cx="28" cy="25" r="4.5" fill="#00aeec"/>
+          <circle cx="17.5" cy="23.5" r="1.8" fill="#fff"/>
+          <circle cx="29.5" cy="23.5" r="1.8" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="icon-label">Bilibili</div>
+    </div>
+
+    <div class="icon" id="icon-profile" ondblclick="openProfile()" onclick="selectIcon(this)">
+      <div class="icon-img">👤</div>
+      <div class="icon-label">My Profile</div>
+    </div>
+
+    <div class="icon" id="icon-computer" ondblclick="openSimpleWindow('computer')" onclick="selectIcon(this)">
+      <div class="icon-img">🖥️</div>
+      <div class="icon-label">My Computer</div>
+    </div>
+
+    <div class="icon" id="icon-docs" ondblclick="openSimpleWindow('docs')" onclick="selectIcon(this)">
+      <div class="icon-img">📁</div>
+      <div class="icon-label">My Documents</div>
+    </div>
+
+    <div class="icon" id="icon-bin" ondblclick="openSimpleWindow('bin')" onclick="selectIcon(this)">
+      <div class="icon-img">🗑️</div>
+      <div class="icon-label">Recycle Bin</div>
+    </div>
+
+    <div class="icon" id="icon-about" ondblclick="openDialog('aboutDesktopDialog')" onclick="selectIcon(this)">
+      <div class="icon-img">💬</div>
+      <div class="icon-label">About This<br>Desktop</div>
+    </div>
+  </div>
+
+  <!-- WMP -->
+  <div class="wmp" id="wmp">
+    <div class="wmp-title" id="wmpTitlebar">
+      <div class="wmp-title-left">
+        <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ff8800"/><polygon points="6,4 12,8 6,12" fill="#fff"/></svg>
+        <div class="wmp-title-text">Windows Media Player</div>
+      </div>
+      <div class="wmp-title-btns">
+        <div class="tb tb-min" onclick="minimizeWmp()">─</div>
+        <div class="tb tb-max" id="btnMax" onclick="toggleMaxWmp()">□</div>
+        <div class="tb tb-close" onclick="closeWmp()">✕</div>
+      </div>
+    </div>
+    <div class="wmp-menu">
+      <span>File</span><span>View</span><span>Play</span><span>Tools</span><span>Help</span>
+    </div>
+    <div class="wmp-body">
+      <div class="wmp-sidebar">
+        <div class="sidebar-arrow">▲</div>
+        <div class="sidebar-nav">
+          <div class="snav active" id="nav-np" onclick="switchNav('np')">Now<br>Playing</div>
+          <div class="snav" id="nav-mg" onclick="switchNav('mg')">Media<br>Guide</div>
+          <div class="snav" id="nav-cd" onclick="switchNav('cd')">Copy<br>from CD</div>
+          <div class="snav" id="nav-ml" onclick="switchNav('ml')">Media<br>Library</div>
+          <div class="snav" id="nav-rt" onclick="switchNav('rt')">Radio<br>Tuner</div>
+        </div>
+        <div class="wmp-logo">
+          <div class="wmp-logo-ball">▶</div>
+          <div class="wmp-logo-text">Windows<br>Media Player</div>
+        </div>
+        <div class="sidebar-arrow bottom">▼</div>
+      </div>
+      <div class="wmp-main">
+        <div class="wmp-topbar">
+          <div class="topbar-title" id="topbarTitle">Now Playing</div>
+        </div>
+        <div class="wmp-view" id="wmpView">
+          <div id="view-np" style="display:flex;flex:1;">
+            <div class="np-view">
+              <div class="np-art" id="npArt">
+                <div class="np-art-placeholder" id="npPlaceholder">
+                  <div class="big-note">🎵</div>
+                  <div style="font-size:12px;color:#2a2a2a;">Double-click icon to open</div>
+                </div>
+              </div>
+              <div class="np-track-info">
+                <div class="np-artist" id="npArtist">—</div>
+                <div class="np-title" id="npTitle">No media selected</div>
+              </div>
+            </div>
+            <div class="np-playlist">
+              <div class="np-pl-header">
+                <span class="np-pl-title">Now Playing List ▼</span>
+              </div>
+              <div class="np-pl-items" id="npPlaylist">
+                <div style="padding:12px 8px;font-size:11px;color:#334;text-align:center;line-height:1.6;">
+                  Add tracks to<br>TRACKS list in<br>index.html
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="view-mg" style="display:none;flex:1;"><div class="na-view"><div class="na-icon">🌐</div><div class="na-text">Media Guide</div><div class="na-sub">Not available in 2026</div></div></div>
+          <div id="view-cd" style="display:none;flex:1;"><div class="na-view"><div class="na-icon">💿</div><div class="na-text">Copy from CD</div><div class="na-sub">Not available in 2026</div></div></div>
+          <div id="view-ml" style="display:none;flex:1;"><div class="na-view"><div class="na-icon">📚</div><div class="na-text">Media Library</div><div class="na-sub">Not available in 2026</div></div></div>
+          <div id="view-rt" style="display:none;flex:1;"><div class="na-view"><div class="na-icon">📻</div><div class="na-text">Radio Tuner</div><div class="na-sub">Not available in 2026</div></div></div>
+        </div>
+        <div class="wmp-status">
+          <div class="status-text" id="statusText">Ready</div>
+          <div class="status-time" id="statusTime">00:00</div>
+        </div>
+      </div>
+    </div>
+    <div class="wmp-ctrl">
+      <div class="ctrl-progress">
+        <span class="ctrl-time" id="curTime">0:00</span>
+        <div class="prog-bar" id="progBar" onclick="seekClick(event)">
+          <div class="prog-fill" id="progFill"></div>
+        </div>
+        <span class="ctrl-time" id="totTime">0:00</span>
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-main-area">
+          <div class="cbtn" onclick="prevT()">⏮</div>
+          <div class="cbtn" onclick="skipB()">⏪</div>
+          <div class="cbtn play" id="playBtn" onclick="togglePlay()">▶</div>
+          <div class="cbtn" onclick="stopT()">⏹</div>
+          <div class="cbtn" onclick="skipF()">⏩</div>
+          <div class="cbtn" onclick="nextT()">⏭</div>
+        </div>
+        <div class="ctrl-extras">
+          <span class="mute-btn" onclick="toggleMute()">🔊</span>
+          <div class="vol-track" id="volTrack">
+            <div class="vol-fill" id="volFill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- YouTube -->
+  <div class="win bwin" id="bwin-yt" style="top:50px;left:160px;">
+    <div class="ie-titlebar" id="btitle-yt">
+      <div class="wmp-title-left">
+        <svg width="16" height="12" viewBox="0 0 16 12"><rect width="16" height="12" rx="3" fill="#ff0000"/><polygon points="6,3 6,9 11,6" fill="#fff"/></svg>
+        <div class="wmp-title-text">Rouri - YouTube — Windows Internet Explorer</div>
+      </div>
+      <div class="wmp-title-btns">
+        <div class="tb tb-min" onclick="minimizeBrowser('yt')">─</div>
+        <div class="tb tb-max" id="bmax-yt" onclick="toggleMaxBrowser('yt')">□</div>
+        <div class="tb tb-close" onclick="closeBrowser('yt')">✕</div>
+      </div>
+    </div>
+    <div class="ie-menubar"><span>File</span><span>Edit</span><span>View</span><span>Favorites</span><span>Tools</span><span>Help</span></div>
+    <div class="ie-toolbar">
+      <div class="ie-nbtn"><span class="ico">◀</span><span class="lbl">Back</span></div>
+      <div class="ie-nbtn"><span class="ico">▶</span><span class="lbl">Forward</span></div>
+      <div class="ie-nbtn"><span class="ico">✕</span><span class="lbl">Stop</span></div>
+      <div class="ie-nbtn"><span class="ico">↻</span><span class="lbl">Refresh</span></div>
+      <div class="ie-nbtn"><span class="ico">⌂</span><span class="lbl">Home</span></div>
+      <div class="ie-tbsep"></div>
+      <div class="ie-nbtn" onclick="openDialog('fakeNetDialog')"><span class="ico">⚠</span><span class="lbl">Alert</span></div>
+    </div>
+    <div class="ie-addrbar">
+      <span class="ie-addr-lbl">Address</span>
+      <input class="ie-addr-input" type="text" value="https://www.youtube.com/@Rouriqwq" readonly />
+      <div class="ie-go-btn" onclick="openInBrowser('https://www.youtube.com/@Rouriqwq')" title="Go">➜</div>
+    </div>
+    <div class="ie-content">
+      <div class="ie-page">
+        <div style="background:#212121;padding:7px 14px;display:flex;align-items:center;gap:12px;">
+          <span style="color:#aaa;font-size:16px;">☰</span>
+          <svg width="80" height="18" viewBox="0 0 90 20"><rect width="28" height="20" rx="4" fill="#ff0000"/><polygon points="10,5 10,15 20,10" fill="#fff"/><text x="32" y="15" font-family="Arial Black,Arial" font-weight="bold" font-size="14" fill="#fff">YouTube</text></svg>
+        </div>
+        <div style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);height:90px;"></div>
+        <div style="padding:0 16px;margin-top:-28px;display:flex;align-items:flex-end;gap:12px;">
+          <div style="width:64px;height:64px;border-radius:50%;background:#ff0000;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:bold;color:#fff;font-family:Arial;flex-shrink:0;">R</div>
+          <div style="padding-bottom:6px;">
+            <div style="font-size:16px;font-weight:bold;color:#0f0f0f;font-family:Roboto,Arial,sans-serif;">Rouri</div>
+            <div style="font-size:11px;color:#606060;font-family:Roboto,Arial,sans-serif;">@Rouriqwq</div>
+          </div>
+        </div>
+        <div style="padding:20px 16px;text-align:center;border-top:1px solid #e5e5e5;margin-top:14px;">
+          <p style="font-size:12px;color:#606060;margin-bottom:14px;line-height:1.7;">Due to website security policies, YouTube cannot be loaded directly in this window.<br>Please click the button below to open the channel in your browser.</p>
+          <button onclick="openInBrowser('https://www.youtube.com/@Rouriqwq')" style="background:#ff0000;color:#fff;border:none;padding:9px 22px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer;border-radius:2px;font-weight:bold;">▶ Open YouTube in Browser</button>
+        </div>
+      </div>
+    </div>
+    <div class="ie-statusbar"><span class="ie-stxt">完毕</span><span class="ie-szone">Internet</span></div>
+  </div>
+
+  <!-- Bilibili -->
+  <div class="win bwin" id="bwin-bili" style="top:70px;left:180px;">
+    <div class="ie-titlebar" id="btitle-bili">
+      <div class="wmp-title-left">
+        <svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="#00aeec"/><text x="8" y="12" font-family="Arial Black" font-weight="900" font-size="11" fill="#fff" text-anchor="middle">B</text></svg>
+        <div class="wmp-title-text">Rouri 的 Bilibili 空间 — Windows Internet Explorer</div>
+      </div>
+      <div class="wmp-title-btns">
+        <div class="tb tb-min" onclick="minimizeBrowser('bili')">─</div>
+        <div class="tb tb-max" id="bmax-bili" onclick="toggleMaxBrowser('bili')">□</div>
+        <div class="tb tb-close" onclick="closeBrowser('bili')">✕</div>
+      </div>
+    </div>
+    <div class="ie-menubar"><span>File</span><span>Edit</span><span>View</span><span>Favorites</span><span>Tools</span><span>Help</span></div>
+    <div class="ie-toolbar">
+      <div class="ie-nbtn"><span class="ico">◀</span><span class="lbl">Back</span></div>
+      <div class="ie-nbtn"><span class="ico">▶</span><span class="lbl">Forward</span></div>
+      <div class="ie-nbtn"><span class="ico">✕</span><span class="lbl">Stop</span></div>
+      <div class="ie-nbtn"><span class="ico">↻</span><span class="lbl">Refresh</span></div>
+      <div class="ie-nbtn"><span class="ico">⌂</span><span class="lbl">Home</span></div>
+      <div class="ie-tbsep"></div>
+      <div class="ie-nbtn" onclick="openDialog('unfinishedDialog')"><span class="ico">ℹ</span><span class="lbl">Info</span></div>
+    </div>
+    <div class="ie-addrbar">
+      <span class="ie-addr-lbl">Address</span>
+      <input class="ie-addr-input" type="text" value="https://space.bilibili.com/511070963" readonly />
+      <div class="ie-go-btn" onclick="openInBrowser('https://space.bilibili.com/511070963')" title="Go">➜</div>
+    </div>
+    <div class="ie-content">
+      <div class="ie-page">
+        <div style="background:#fff;border-bottom:1px solid #e3e5e7;padding:6px 14px;display:flex;align-items:center;">
+          <svg width="90" height="22" viewBox="0 0 90 22"><rect x="0" y="1" width="20" height="20" rx="3" fill="#00aeec"/><text x="10" y="15" font-family="Arial Black" font-weight="900" font-size="13" fill="#fff" text-anchor="middle">B</text><text x="26" y="16" font-family="PingFang SC,Noto Sans CJK SC,Arial" font-weight="bold" font-size="13" fill="#f25d8e">哔哩哔哩</text></svg>
+        </div>
+        <div style="background:linear-gradient(135deg,#72c8f0,#3ba0e0,#1a78c2);height:80px;"></div>
+        <div style="padding:0 16px;margin-top:-24px;display:flex;align-items:flex-end;gap:12px;">
+          <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#00aeec,#0078d4);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#fff;font-family:Arial;flex-shrink:0;">R</div>
+          <div style="padding-bottom:6px;">
+            <div style="font-size:15px;font-weight:bold;color:#18191c;font-family:PingFang SC,Arial,sans-serif;">Rouri</div>
+            <div style="font-size:11px;color:#99a2aa;font-family:Arial,sans-serif;">UID: 511070963</div>
+          </div>
+        </div>
+        <div style="padding:18px 16px;text-align:center;border-top:1px solid #e3e5e7;margin-top:14px;">
+          <p style="font-size:12px;color:#99a2aa;margin-bottom:14px;line-height:1.7;">由于网站安全策略，Bilibili 无法在此窗口内直接加载。<br>请点击下方按钮在浏览器中访问空间。</p>
+          <button onclick="openInBrowser('https://space.bilibili.com/511070963')" style="background:#f25d8e;color:#fff;border:none;padding:9px 22px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer;border-radius:20px;font-weight:bold;">在浏览器中打开 B站空间</button>
+        </div>
+      </div>
+    </div>
+    <div class="ie-statusbar"><span class="ie-stxt">完毕</span><span class="ie-szone">Internet</span></div>
+  </div>
+
+  <!-- Profile -->
+  <div class="win profile-win" id="pwin-profile" style="top:90px;left:220px;">
+    <div class="ie-titlebar" id="ptitle-profile">
+      <div class="wmp-title-left">
+        <svg width="16" height="16" viewBox="0 0 16 16">
+          <circle cx="8" cy="5" r="3" fill="#fff"/>
+          <path d="M3 14c.6-2.6 2.7-4 5-4s4.4 1.4 5 4" fill="#fff"/>
+        </svg>
+        <div class="wmp-title-text">Rouri - My Profile</div>
+      </div>
+      <div class="wmp-title-btns">
+        <div class="tb tb-min" onclick="minimizeProfile()">─</div>
+        <div class="tb tb-max" id="pmax-profile" onclick="toggleMaxProfile()">□</div>
+        <div class="tb tb-close" onclick="closeProfile()">✕</div>
+      </div>
+    </div>
+    <div class="ie-menubar"><span>File</span><span>Edit</span><span>View</span><span>Favorites</span><span>Tools</span><span>Help</span></div>
+    <div class="ie-toolbar">
+      <div class="ie-nbtn"><span class="ico">👤</span><span class="lbl">Profile</span></div>
+      <div class="ie-nbtn"><span class="ico">⭐</span><span class="lbl">Links</span></div>
+      <div class="ie-nbtn"><span class="ico">✉</span><span class="lbl">Contact</span></div>
+      <div class="ie-tbsep"></div>
+      <div class="ie-nbtn" onclick="openDialog('welcomeDialog')"><span class="ico">💬</span><span class="lbl">Welcome</span></div>
+    </div>
+    <div class="ie-addrbar">
+      <span class="ie-addr-lbl">Address</span>
+      <input class="ie-addr-input" type="text" value="about:rouri-profile" readonly />
+      <div class="ie-go-btn" title="Go">➜</div>
+    </div>
+    <div class="profile-content">
+      <div class="profile-shell">
+        <div class="profile-left">
+          <div class="profile-avatar-wrap">
+            <img class="profile-avatar" src="images/profile.jpg" alt="Rouri profile photo" />
+          </div>
+          <div class="profile-badge">Windows XP Style<br />Personal Card</div>
+        </div>
+
+        <div class="profile-right">
+          <div class="profile-name">Rouri</div>
+          <div class="profile-role">Content Creator</div>
+
+          <div class="profile-section">
+            <div class="profile-section-title">General Information</div>
+            <div class="profile-fields">
+              <div class="profile-row"><div class="profile-key">Name</div><div class="profile-value">Rouri</div></div>
+              <div class="profile-row"><div class="profile-key">Discord</div><div class="profile-value">Rouriqwq</div></div>
+              <div class="profile-row"><div class="profile-key">Email</div><div class="profile-value">Rouriqwq@gmail.com</div></div>
+            </div>
+          </div>
+
+          <div style="height:12px;"></div>
+
+          <div class="profile-section">
+            <div class="profile-section-title">Quick Links</div>
+            <div class="profile-fields">
+              <div class="profile-row"><div class="profile-key">Studio</div><div class="profile-value"><a class="profile-link" href="https://r-s-studio.github.io/" target="_blank">RSstudio</a></div></div>
+              <div class="profile-row"><div class="profile-key">GitHub</div><div class="profile-value"><a class="profile-link" href="https://github.com/Rouriqwq123" target="_blank">Open My Github</a></div></div>
+              <div class="profile-row"><div class="profile-key">Website2</div><div class="profile-value"><a class="profile-link" href="https://rouriqwq123.github.io/" target="_blank">Open My Second Website</a></div></div>
+              <div class="profile-row"><div class="profile-key">Youtube</div><div class="profile-value"><a class="profile-link" href="https://www.youtube.com/@Rouriqwq" target="_blank">Open My Youtube</a></div></div>
+              <div class="profile-row"><div class="profile-key">Bilibili</div><div class="profile-value"><a class="profile-link" href="https://space.bilibili.com/511070963" target="_blank">Open My BiliBili</a></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ie-statusbar"><span class="ie-stxt">Ready</span><span class="ie-szone">Local</span></div>
+  </div>
+
+  <!-- My Computer -->
+  <div class="win" id="win-computer" style="top:120px;left:260px;width:620px;">
+    <div class="ie-titlebar" id="title-computer">
+      <div class="wmp-title-left">
+        <span style="font-size:15px;">🖥️</span>
+        <div class="wmp-title-text">My Computer</div>
+      </div>
+      <div class="wmp-title-btns">
+        <div class="tb tb-min" onclick="minimizeSimpleWindow('computer')">─</div>
+        <div class="tb tb-max" id="max-computer" onclick="toggleMaxSimpleWindow('computer')">□</div>
+        <div class="tb tb-close" onclick="closeSimpleWindow('computer')">✕</div>
+      </div>
+    </div>
+    <div class="ie-menubar"><span>File</span><span>Edit</span><span>View</span><span>Favorites</span><span>Tools</span><span>Help</span></div>
+    <div class="ie-toolbar">
+      <div class="ie-nbtn"><span class="ico">🖥️</span><span class="lbl">Computer</span></div>
+      <div class="ie-nbtn" onclick="openDialog('aboutDesktopDialog')"><span class="ico">ℹ</span><span class="lbl">About</span></div>
+    </div>
+    <div class="ie-addrbar">
+      <span class="ie-addr-lbl">Address</span>
+      <input class="ie-addr-input" type="text" value="My Computer" readonly />
+      <div class="ie-go-btn">➜</div>
+    </div>
+    <div class="ie-content">
+      <div class="xp-pane">
+        <div class="xp-side">
+          <div class="xp-side-box">
+            <div class="xp-side-title">System Tasks</div>
+            <div class="xp-side-body">
+              View system information<br>
+              Add or remove programs<br>
+              Change a setting
+            </div>
+          </div>
+          <div class="xp-side-box">
+            <div class="xp-side-title">Other Places</div>
+            <div class="xp-side-body">
+              My Documents<br>
+              Shared Documents<br>
+              Control Panel
+            </div>
+          </div>
+        </div>
+        <div class="xp-main">
+          <div class="xp-heading">Drives and Storage</div>
+          <div class="xp-grid">
+            <div class="xp-card">
+              <div class="xp-card-title">💽 Local Disk (C:)</div>
+              <div class="xp-card-sub">System drive<br>Used: nostalgic enough</div>
+            </div>
+            <div class="xp-card">
+              <div class="xp-card-title">🎵 My Music</div>
+              <div class="xp-card-sub">Songs, demos, loops, unfinished ideas</div>
+            </div>
+            <div class="xp-card">
+              <div class="xp-card-title">🖼️ My Pictures</div>
+              <div class="xp-card-sub">Profile images, art, thumbnails</div>
+            </div>
+            <div class="xp-card">
+              <div class="xp-card-title">📂 Shared Documents</div>
+              <div class="xp-card-sub">Links, notes, random desktop lore</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ie-statusbar"><span class="ie-stxt">4 object(s)</span><span class="ie-szone">Local</span></div>
+  </div>
+
+  <!-- My Documents -->
+  <div class="win" id="win-docs" style="top:145px;left:295px;width:620px;">
+    <div class="ie-titlebar" id="title-docs">
+      <div class="wmp-title-left">
+        <span style="font-size:15px;">📁</span>
+        <div class="wmp-title-text">My Documents</div>
+      </div>
+      <div class="wmp-title-btns">
+        <div class="tb tb-min" onclick="minimizeSimpleWindow('docs')">─</div>
+        <div class="tb tb-max" id="max-docs" onclick="toggleMaxSimpleWindow('docs')">□</div>
+        <div class="tb tb-close" onclick="closeSimpleWindow('docs')">✕</div>
+      </div>
+    </div>
+    <div class="ie-menubar"><span>File</span><span>Edit</span><span>View</span><span>Favorites</span><span>Tools</span><span>Help</span></div>
+    <div class="ie-toolbar">
+      <div class="ie-nbtn"><span class="ico">📁</span><span class="lbl">Documents</span></div>
+      <div class="ie-nbtn" onclick="openDialog('unfinishedDialog')"><span class="ico">🎼</span><span class="lbl">Demo</span></div>
+    </div>
+    <div class="ie-addrbar">
+      <span class="ie-addr-lbl">Address</span>
+      <input class="ie-addr-input" type="text" value="My Documents" readonly />
+      <div class="ie-go-btn">➜</div>
+    </div>
+    <div class="ie-content">
+      <div class="xp-pane">
+        <div class="xp-side">
+          <div class="xp-side-box">
+            <div class="xp-side-title">File and Folder Tasks</div>
+            <div class="xp-side-body">
+              Make a new folder<br>
+              Publish this folder to the Web<br>
+              Share this folder
+            </div>
+          </div>
+        </div>
+        <div class="xp-main">
+          <div class="xp-heading">Files Stored in My Documents</div>
+          <div class="xp-list">
+            <div class="xp-item">
+              <div class="xp-icon">📄</div>
+              <div>
+                <div>lyrics.txt</div>
+                <div class="xp-sub">Text Document</div>
+              </div>
+            </div>
+            <div class="xp-item">
+              <div class="xp-icon">🎵</div>
+              <div>
+                <div>unfinished_demo.wav</div>
+                <div class="xp-sub">Wave Sound</div>
+              </div>
+            </div>
+            <div class="xp-item">
+              <div class="xp-icon">🔗</div>
+              <div>
+                <div>links.url</div>
+                <div class="xp-sub">Internet Shortcut</div>
+              </div>
+            </div>
+            <div class="xp-item">
+              <div class="xp-icon">📝</div>
+              <div>
+                <div>notes.txt</div>
+                <div class="xp-sub">Text Document</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ie-statusbar"><span class="ie-stxt">4 file(s)</span><span class="ie-szone">Local</span></div>
+  </div>
+
+  <!-- Recycle Bin -->
+  <div class="win" id="win-bin" style="top:170px;left:330px;width:500px;">
+    <div class="ie-titlebar" id="title-bin">
+      <div class="wmp-title-left">
+        <span style="font-size:15px;">🗑️</span>
+        <div class="wmp-title-text">Recycle Bin</div>
+      </div>
+      <div class="wmp-title-btns">
+        <div class="tb tb-min" onclick="minimizeSimpleWindow('bin')">─</div>
+        <div class="tb tb-max" id="max-bin" onclick="toggleMaxSimpleWindow('bin')">□</div>
+        <div class="tb tb-close" onclick="closeSimpleWindow('bin')">✕</div>
+      </div>
+    </div>
+    <div class="ie-menubar"><span>File</span><span>Edit</span><span>View</span><span>Favorites</span><span>Tools</span><span>Help</span></div>
+    <div class="ie-toolbar">
+      <div class="ie-nbtn"><span class="ico">🗑️</span><span class="lbl">Recycle Bin</span></div>
+    </div>
+    <div class="ie-addrbar">
+      <span class="ie-addr-lbl">Address</span>
+      <input class="ie-addr-input" type="text" value="Recycle Bin" readonly />
+      <div class="ie-go-btn">➜</div>
+    </div>
+    <div class="ie-content">
+      <div class="xp-pane">
+        <div class="xp-main" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+          <div style="font-size:56px;margin-bottom:10px;">🗑️</div>
+          <div style="font-size:20px;color:#1b4d8c;font-weight:bold;margin-bottom:6px;">Recycle Bin is empty</div>
+          <div style="font-size:12px;color:#66717d;">No deleted files were found.</div>
+        </div>
+      </div>
+    </div>
+    <div class="ie-statusbar"><span class="ie-stxt">0 object(s)</span><span class="ie-szone">Local</span></div>
+  </div>
+
+  <!-- Balloon -->
+  <div class="balloon" id="musicBalloon">
+    <div class="balloon-head">
+      <span>Notification</span>
+      <span class="balloon-close" onclick="hideBalloon()">✕</span>
+    </div>
+    <div class="balloon-body">
+      You have new music updates.
+    </div>
+  </div>
+
+  <!-- Dialogs -->
+  <div class="dialog" id="welcomeDialog">
+    <div class="dialog-title">
+      <span>Information</span>
+      <span style="cursor:pointer;" onclick="closeDialog('welcomeDialog')">✕</span>
+    </div>
+    <div class="dialog-body">
+      <div class="dialog-icon">💬</div>
+      <div>Welcome back, Rouri.</div>
+    </div>
+    <div class="dialog-actions">
+      <button class="xp-btn" onclick="closeDialog('welcomeDialog')">OK</button>
+    </div>
+  </div>
+
+  <div class="dialog" id="aboutDesktopDialog">
+    <div class="dialog-title">
+      <span>About This Desktop</span>
+      <span style="cursor:pointer;" onclick="closeDialog('aboutDesktopDialog')">✕</span>
+    </div>
+    <div class="dialog-body">
+      <div class="dialog-icon">🖥️</div>
+      <div>
+        Rouri's nostalgic desktop experience.<br>
+        Inspired by Windows XP, old Internet vibes, music folders, and personal homepage energy.
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button class="xp-btn" onclick="closeDialog('aboutDesktopDialog')">OK</button>
+    </div>
+  </div>
+
+  <div class="dialog" id="fakeNetDialog">
+    <div class="dialog-title">
+      <span>Network Error</span>
+      <span style="cursor:pointer;" onclick="closeDialog('fakeNetDialog')">✕</span>
+    </div>
+    <div class="dialog-body">
+      <div class="dialog-icon">⚠️</div>
+      <div>No internet connection... just kidding.</div>
+    </div>
+    <div class="dialog-actions">
+      <button class="xp-btn" onclick="closeDialog('fakeNetDialog')">OK</button>
+    </div>
+  </div>
+
+  <div class="dialog" id="unfinishedDialog">
+    <div class="dialog-title">
+      <span>Music Info</span>
+      <span style="cursor:pointer;" onclick="closeDialog('unfinishedDialog')">✕</span>
+    </div>
+    <div class="dialog-body">
+      <div class="dialog-icon">🎼</div>
+      <div>1 unfinished demo detected.</div>
+    </div>
+    <div class="dialog-actions">
+      <button class="xp-btn" onclick="closeDialog('unfinishedDialog')">OK</button>
+    </div>
+  </div>
+
+  <audio id="audioEl"></audio>
+
+  <!-- Taskbar -->
+  <div class="taskbar" id="taskbar">
+    <div class="start-btn" id="startBtn">
+      <svg class="start-logo" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="6.5" height="6.5" fill="#ff3a00" rx="0.5"/>
+        <rect x="8.5" y="1" width="6.5" height="6.5" fill="#00cc00" rx="0.5"/>
+        <rect x="1" y="8.5" width="6.5" height="6.5" fill="#0077ff" rx="0.5"/>
+        <rect x="8.5" y="8.5" width="6.5" height="6.5" fill="#ffcc00" rx="0.5"/>
+      </svg>
+      <span class="start-text">Start</span>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tbar-btns" id="tbarBtns"></div>
+    <div class="systray">
+      <span class="tray-icon">🔊</span>
+      <span class="tray-icon">📶</span>
+      <span class="tray-icon">🛡️</span>
+      <div class="tb-sep" style="margin-right:6px;"></div>
+      <div class="systray-clock" id="systrayClock">00:00</div>
+    </div>
+  </div>
+
+  <script>
+    const TRACKS = [
+      { name: "暗血", artist: "Rouri", src: "music/digicore.mp4", art: "images/digicore.jpg" },
+      { name: "買了否冷", artist: "吉他张", src: "music/fa.mp4", art: "images/fa.jpg" },
+      { name: "這個世界或許很美", artist: "Rouri / Jiamu", src: "music/这个世界或许很美.mp4", art: "images/这个世界或许很美.jpg" },
+    ];
+
+    let cur = -1, isPlaying = false, muted = false;
+    const audio = document.getElementById('audioEl');
+
+    function fmt(s){
+      s = Math.floor(s || 0);
+      return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + s % 60;
+    }
+
+    function buildPlaylist(){
+      const el = document.getElementById('npPlaylist');
+      if(TRACKS.length === 0){
+        el.innerHTML = '<div style="padding:12px 8px;font-size:11px;color:#334;text-align:center;line-height:1.6;">Add tracks to<br>TRACKS list in<br>index.html</div>';
+        return;
+      }
+      el.innerHTML = TRACKS.map((t,i)=>`
+        <div class="pl-item ${i===cur?'active':''}" onclick="selectTrack(${i})">
+          <span class="pl-plus">+</span>
+          <span class="pl-item-name" title="${t.name}">${t.name}</span>
+          <span class="pl-item-dur" id="dur_${i}"></span>
+        </div>
+      `).join('');
+    }
+
+    function showArt(url){
+      const art = document.getElementById('npArt');
+      const ph = document.getElementById('npPlaceholder');
+      const old = art.querySelector('img');
+      if(old) old.remove();
+
+      if(url){
+        ph.style.display = 'none';
+        const img = document.createElement('img');
+        img.src = url;
+        art.appendChild(img);
+      }else{
+        ph.style.display = 'flex';
+      }
+    }
+
+    function selectTrack(i){
+      cur = i;
+      const t = TRACKS[i];
+      audio.src = t.src;
+      audio.load();
+      document.getElementById('npTitle').textContent = t.name;
+      document.getElementById('npArtist').textContent = t.artist || '';
+      document.getElementById('topbarTitle').textContent = t.artist ? t.artist + ' — ' + t.name : t.name;
+      document.getElementById('statusText').textContent = t.name;
+      showArt(t.art || null);
+      buildPlaylist();
+      startPlay();
+    }
+
+    audio.addEventListener('loadedmetadata', ()=>{
+      const d = Math.floor(audio.duration);
+      document.getElementById('totTime').textContent = fmt(d);
+      document.getElementById('statusTime').textContent = fmt(d);
+      const durEl = document.getElementById('dur_' + cur);
+      if(durEl) durEl.textContent = fmt(d);
+    });
+
+    audio.addEventListener('timeupdate', ()=>{
+      const d = audio.duration || 1;
+      const c = audio.currentTime;
+      document.getElementById('progFill').style.width = (c / d * 100) + '%';
+      document.getElementById('curTime').textContent = fmt(c);
+    });
+
+    audio.addEventListener('ended', ()=>nextT());
+
+    function togglePlay(){
+      if(cur < 0 && TRACKS.length > 0){ selectTrack(0); return; }
+      if(cur < 0) return;
+      isPlaying ? pausePlay() : startPlay();
+    }
+    function startPlay(){
+      isPlaying = true;
+      audio.play().catch(()=>{});
+      document.getElementById('playBtn').textContent = '⏸';
+      document.getElementById('statusText').textContent = TRACKS[cur]?.name || '—';
+    }
+    function pausePlay(){
+      isPlaying = false;
+      audio.pause();
+      document.getElementById('playBtn').textContent = '▶';
+      document.getElementById('statusText').textContent = 'Paused';
+    }
+    function stopT(){ pausePlay(); audio.currentTime = 0; document.getElementById('statusText').textContent = 'Stopped'; }
+    function prevT(){ if(!TRACKS.length) return; selectTrack((cur - 1 + TRACKS.length) % TRACKS.length); }
+    function nextT(){ if(!TRACKS.length) return; selectTrack((cur + 1) % TRACKS.length); }
+    function skipB(){ audio.currentTime = Math.max(0, audio.currentTime - 10); }
+    function skipF(){ audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 10); }
+    function seekClick(e){ if(audio.duration){ audio.currentTime = (e.offsetX / e.currentTarget.offsetWidth) * audio.duration; } }
+    function toggleMute(){ muted = !muted; audio.muted = muted; document.querySelector('.mute-btn').textContent = muted ? '🔇' : '🔊'; }
+
+    const volTrackEl = document.getElementById('volTrack');
+    const volFillEl  = document.getElementById('volFill');
+    let volDragging = false;
+    function setVolFromEvent(e){
+      const rect = volTrackEl.getBoundingClientRect();
+      const r = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      audio.volume = r;
+      volFillEl.style.width = (r * 100) + '%';
+    }
+    volTrackEl.addEventListener('mousedown', e=>{ volDragging = true; setVolFromEvent(e); e.preventDefault(); });
+    document.addEventListener('mousemove', e=>{ if(volDragging) setVolFromEvent(e); });
+    document.addEventListener('mouseup', ()=>{ volDragging = false; });
+
+    function switchNav(k){
+      ['np','mg','cd','ml','rt'].forEach(n=>{
+        document.getElementById('nav-' + n).classList.toggle('active', n === k);
+        const v = document.getElementById('view-' + n);
+        if(v) v.style.display = n === k ? 'flex' : 'none';
+      });
+    }
+
+    // Taskbar helpers
+    function addTbarBtn(id,icon,label,onClick){
+      if(document.getElementById('tbtn-' + id)) return;
+      const btn = document.createElement('div');
+      btn.className = 'tbar-btn';
+      btn.id = 'tbtn-' + id;
+      btn.innerHTML = `<span class="tbar-btn-icon">${icon}</span><span class="tbar-btn-label">${label}</span>`;
+      btn.onclick = onClick;
+      document.getElementById('tbarBtns').appendChild(btn);
+    }
+    function removeTbarBtn(id){
+      const b = document.getElementById('tbtn-' + id);
+      if(b) b.remove();
+    }
+    function setTbarBtnPressed(id,on){
+      const b = document.getElementById('tbtn-' + id);
+      if(b) b.classList.toggle('pressed',on);
+    }
+
+    // Clock
+    function updateClock(){
+      const n = new Date();
+      const h = n.getHours().toString().padStart(2,'0');
+      const m = n.getMinutes().toString().padStart(2,'0');
+      document.getElementById('systrayClock').textContent = h + ':' + m;
+    }
+    updateClock();
+    setInterval(updateClock,1000);
+
+    // WMP
+    const wmpEl = document.getElementById('wmp');
+    const tb = document.getElementById('wmpTitlebar');
+    let drag = false, dx = 0, dy = 0;
+    tb.addEventListener('mousedown', e=>{
+      if(e.target.classList.contains('tb') || wmpMaximized)return;
+      drag = true; dx = e.clientX - wmpEl.offsetLeft; dy = e.clientY - wmpEl.offsetTop; e.preventDefault();
+    });
+    document.addEventListener('mousemove', e=>{
+      if(!drag)return;
+      wmpEl.style.left=Math.max(0,Math.min(window.innerWidth-wmpEl.offsetWidth,e.clientX-dx))+'px';
+      wmpEl.style.top=Math.max(0,Math.min(window.innerHeight-50,e.clientY-dy))+'px';
+    });
+    document.addEventListener('mouseup',()=>drag=false);
+
+    let wmpOpen=false, wmpMinimized=false, wmpMaximized=false;
+    let wmpSavedPos={left:'140px',top:'60px'};
+    function toggleMaxWmp(){
+      if(wmpMaximized){
+        wmpMaximized=false; wmpEl.classList.remove('maximized');
+        wmpEl.style.left=wmpSavedPos.left; wmpEl.style.top=wmpSavedPos.top;
+        wmpEl.style.width=''; wmpEl.style.height=''; document.getElementById('btnMax').textContent='□';
+      } else {
+        wmpSavedPos={left:wmpEl.style.left||'140px', top:wmpEl.style.top||'60px'};
+        wmpMaximized=true; wmpEl.classList.add('maximized'); document.getElementById('btnMax').textContent='❐';
+      }
+    }
+    function openWmp(){
+      wmpEl.classList.add('visible'); wmpOpen=true; wmpMinimized=false;
+      addTbarBtn('wmp','🎵','Windows Media Player',toggleWmpWindow); setTbarBtnPressed('wmp',true);
+    }
+    function closeWmp(){ wmpEl.classList.remove('visible'); pausePlay(); wmpOpen=false; wmpMinimized=false; removeTbarBtn('wmp'); }
+    function minimizeWmp(){ wmpEl.classList.remove('visible'); wmpMinimized=true; setTbarBtnPressed('wmp',false); }
+    function toggleWmpWindow(){
+      if(!wmpOpen) return;
+      if(wmpMinimized){ wmpEl.classList.add('visible'); wmpMinimized=false; setTbarBtnPressed('wmp',true); }
+      else minimizeWmp();
+    }
+
+    // Browsers
+    const BROWSERS = {
+      yt:   { open:false, minimized:false, maximized:false, savedPos:{left:'160px',top:'50px'} },
+      bili: { open:false, minimized:false, maximized:false, savedPos:{left:'180px',top:'70px'} }
+    };
+    const BROWSER_META = {
+      yt:   { icon:'▶', label:'YouTube' },
+      bili: { icon:'📺', label:'Bilibili' }
+    };
+    function openBrowser(id){
+      const b=BROWSERS[id], el=document.getElementById('bwin-'+id);
+      el.classList.add('visible'); b.open=true; b.minimized=false;
+      addTbarBtn('bwin-'+id,BROWSER_META[id].icon,BROWSER_META[id].label,()=>toggleBrowserWindow(id));
+      setTbarBtnPressed('bwin-'+id,true);
+    }
+    function closeBrowser(id){
+      const b=BROWSERS[id], el=document.getElementById('bwin-'+id);
+      el.classList.remove('visible','maximized'); b.open=false; b.minimized=false; b.maximized=false;
+      document.getElementById('bmax-'+id).textContent='□'; removeTbarBtn('bwin-'+id);
+    }
+    function minimizeBrowser(id){ BROWSERS[id].minimized=true; document.getElementById('bwin-'+id).classList.remove('visible'); setTbarBtnPressed('bwin-'+id,false); }
+    function toggleBrowserWindow(id){
+      const b=BROWSERS[id]; if(!b.open) return;
+      if(b.minimized){ document.getElementById('bwin-'+id).classList.add('visible'); b.minimized=false; setTbarBtnPressed('bwin-'+id,true); }
+      else minimizeBrowser(id);
+    }
+    function toggleMaxBrowser(id){
+      const b=BROWSERS[id], el=document.getElementById('bwin-'+id);
+      if(b.maximized){
+        b.maximized=false; el.classList.remove('maximized');
+        el.style.left=b.savedPos.left; el.style.top=b.savedPos.top; el.style.width=''; el.style.height='';
+        document.getElementById('bmax-'+id).textContent='□';
+      } else {
+        b.savedPos={left:el.style.left||'160px', top:el.style.top||'50px'};
+        b.maximized=true; el.classList.add('maximized'); document.getElementById('bmax-'+id).textContent='❐';
+      }
+    }
+    function openInBrowser(url){ window.open(url,'_blank'); }
+
+    ['yt','bili'].forEach(id=>{
+      const win=document.getElementById('bwin-'+id), ttl=document.getElementById('btitle-'+id);
+      let d=false, ox=0, oy=0;
+      ttl.addEventListener('mousedown',e=>{ if(e.target.classList.contains('tb')||BROWSERS[id].maximized)return; d=true; ox=e.clientX-win.offsetLeft; oy=e.clientY-win.offsetTop; e.preventDefault(); });
+      document.addEventListener('mousemove',e=>{ if(!d)return; win.style.left=Math.max(0,Math.min(window.innerWidth-win.offsetWidth,e.clientX-ox))+'px'; win.style.top=Math.max(0,Math.min(window.innerHeight-50,e.clientY-oy))+'px'; });
+      document.addEventListener('mouseup',()=>d=false);
+    });
+
+    // Profile
+    const profileEl=document.getElementById('pwin-profile');
+    const profileTitle=document.getElementById('ptitle-profile');
+    let profileOpen=false, profileMinimized=false, profileMaximized=false;
+    let profileSavedPos={left:'220px', top:'90px'};
+    let pdrag=false, pdx=0, pdy=0;
+    profileTitle.addEventListener('mousedown',e=>{ if(e.target.classList.contains('tb')||profileMaximized)return; pdrag=true; pdx=e.clientX-profileEl.offsetLeft; pdy=e.clientY-profileEl.offsetTop; e.preventDefault(); });
+    document.addEventListener('mousemove',e=>{ if(!pdrag)return; profileEl.style.left=Math.max(0,Math.min(window.innerWidth-profileEl.offsetWidth,e.clientX-pdx))+'px'; profileEl.style.top=Math.max(0,Math.min(window.innerHeight-50,e.clientY-pdy))+'px'; });
+    document.addEventListener('mouseup',()=>pdrag=false);
+
+    function openProfile(){ profileEl.classList.add('visible'); profileOpen=true; profileMinimized=false; addTbarBtn('profile','👤','My Profile',toggleProfileWindow); setTbarBtnPressed('profile', true); }
+    function closeProfile(){ profileEl.classList.remove('visible','maximized'); profileOpen=false; profileMinimized=false; profileMaximized=false; document.getElementById('pmax-profile').textContent='□'; removeTbarBtn('profile'); }
+    function minimizeProfile(){ profileEl.classList.remove('visible'); profileMinimized=true; setTbarBtnPressed('profile', false); }
+    function toggleProfileWindow(){ if(!profileOpen)return; if(profileMinimized){ profileEl.classList.add('visible'); profileMinimized=false; setTbarBtnPressed('profile', true); } else minimizeProfile(); }
+    function toggleMaxProfile(){
+      if(profileMaximized){
+        profileMaximized=false; profileEl.classList.remove('maximized');
+        profileEl.style.left=profileSavedPos.left; profileEl.style.top=profileSavedPos.top; profileEl.style.width=''; profileEl.style.height='';
+        document.getElementById('pmax-profile').textContent='□';
+      } else {
+        profileSavedPos={left:profileEl.style.left||'220px', top:profileEl.style.top||'90px'};
+        profileMaximized=true; profileEl.classList.add('maximized'); document.getElementById('pmax-profile').textContent='❐';
+      }
+    }
+
+    // Simple windows: computer/docs/bin
+    const SIMPLE_WINS = {
+      computer: { id:'win-computer', title:'title-computer', icon:'🖥️', label:'My Computer', open:false, minimized:false, maximized:false, savedPos:{left:'260px',top:'120px'} },
+      docs:     { id:'win-docs',     title:'title-docs',     icon:'📁', label:'My Documents', open:false, minimized:false, maximized:false, savedPos:{left:'295px',top:'145px'} },
+      bin:      { id:'win-bin',      title:'title-bin',      icon:'🗑️', label:'Recycle Bin', open:false, minimized:false, maximized:false, savedPos:{left:'330px',top:'170px'} }
+    };
+
+    Object.keys(SIMPLE_WINS).forEach(key=>{
+      const meta=SIMPLE_WINS[key];
+      const win=document.getElementById(meta.id);
+      const ttl=document.getElementById(meta.title);
+      let d=false, ox=0, oy=0;
+      ttl.addEventListener('mousedown',e=>{
+        if(e.target.classList.contains('tb')||meta.maximized)return;
+        d=true; ox=e.clientX-win.offsetLeft; oy=e.clientY-win.offsetTop; e.preventDefault();
+      });
+      document.addEventListener('mousemove',e=>{
+        if(!d)return;
+        win.style.left=Math.max(0,Math.min(window.innerWidth-win.offsetWidth,e.clientX-ox))+'px';
+        win.style.top=Math.max(0,Math.min(window.innerHeight-50,e.clientY-oy))+'px';
+      });
+      document.addEventListener('mouseup',()=>d=false);
+    });
+
+    function openSimpleWindow(key){
+      const meta=SIMPLE_WINS[key], el=document.getElementById(meta.id);
+      el.classList.add('visible'); meta.open=true; meta.minimized=false;
+      addTbarBtn('simple-'+key, meta.icon, meta.label, ()=>toggleSimpleWindow(key));
+      setTbarBtnPressed('simple-'+key, true);
+    }
+    function closeSimpleWindow(key){
+      const meta=SIMPLE_WINS[key], el=document.getElementById(meta.id);
+      el.classList.remove('visible','maximized');
+      meta.open=false; meta.minimized=false; meta.maximized=false;
+      const maxBtn=document.getElementById('max-'+key); if(maxBtn) maxBtn.textContent='□';
+      removeTbarBtn('simple-'+key);
+    }
+    function minimizeSimpleWindow(key){
+      const meta=SIMPLE_WINS[key], el=document.getElementById(meta.id);
+      el.classList.remove('visible'); meta.minimized=true; setTbarBtnPressed('simple-'+key,false);
+    }
+    function toggleSimpleWindow(key){
+      const meta=SIMPLE_WINS[key], el=document.getElementById(meta.id);
+      if(!meta.open) return;
+      if(meta.minimized){ el.classList.add('visible'); meta.minimized=false; setTbarBtnPressed('simple-'+key,true); }
+      else minimizeSimpleWindow(key);
+    }
+    function toggleMaxSimpleWindow(key){
+      const meta=SIMPLE_WINS[key], el=document.getElementById(meta.id);
+      if(meta.maximized){
+        meta.maximized=false; el.classList.remove('maximized');
+        el.style.left=meta.savedPos.left; el.style.top=meta.savedPos.top; el.style.width=''; el.style.height='';
+        document.getElementById('max-'+key).textContent='□';
+      } else {
+        meta.savedPos={left:el.style.left||meta.savedPos.left, top:el.style.top||meta.savedPos.top};
+        meta.maximized=true; el.classList.add('maximized'); document.getElementById('max-'+key).textContent='❐';
+      }
+    }
+
+    // Dialog / Balloon
+    function openDialog(id){ document.getElementById(id).classList.add('visible'); }
+    function closeDialog(id){ document.getElementById(id).classList.remove('visible'); }
+    function showBalloon(){ document.getElementById('musicBalloon').classList.add('visible'); }
+    function hideBalloon(){ document.getElementById('musicBalloon').classList.remove('visible'); }
+
+    // Desktop icon select + drag
+    function selectIcon(el){ document.querySelectorAll('.icon').forEach(i=>i.classList.remove('selected')); el.classList.add('selected'); }
+
+    function makeIconDraggable(icon){
+      let isDragging=false, startX=0, startY=0, offsetX=0, offsetY=0, moved=false;
+      icon.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        isDragging = true; moved = false;
+        const rect = icon.getBoundingClientRect();
+        startX = e.clientX; startY = e.clientY;
+        offsetX = e.clientX - rect.left; offsetY = e.clientY - rect.top;
+        icon.style.zIndex = 20; e.preventDefault();
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX, dy = e.clientY - startY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+        let newLeft = e.clientX - offsetX, newTop = e.clientY - offsetY;
+        const maxLeft = window.innerWidth - icon.offsetWidth;
+        const maxTop = window.innerHeight - 30 - icon.offsetHeight;
+        newLeft = Math.max(0, Math.min(maxLeft, newLeft));
+        newTop = Math.max(0, Math.min(maxTop, newTop));
+        icon.style.left = newLeft + 'px'; icon.style.top = newTop + 'px';
+      });
+      document.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false; icon.style.zIndex = 10;
+      });
+      icon.addEventListener('click', (e) => {
+        if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; }
+      }, true);
+    }
+
+    ['icon-music','icon-yt','icon-bili','icon-profile','icon-computer','icon-docs','icon-bin','icon-about']
+      .forEach(id=>makeIconDraggable(document.getElementById(id)));
+
+    // startup effects
+    setTimeout(()=>openDialog('welcomeDialog'), 700);
+    setTimeout(()=>showBalloon(), 2000);
+
+    buildPlaylist();
+  </script>
+</body>
+</html>
