@@ -348,6 +348,158 @@
     }
     .balloon-close{cursor:pointer;font-weight:bold;color:#7b6900;}
 
+    /* ---- Start Menu ---- */
+    .start-menu{
+  position:absolute;
+  left:0;
+  bottom:40px;
+  width:380px;
+  height:435px;
+  background:#f3f3f3;
+  border:1px solid #245edb;
+  border-radius:7px 7px 0 0;
+  box-shadow:4px 4px 18px rgba(0,0,0,.35);
+  overflow:hidden;
+  z-index:9999;
+  display:none;
+}
+
+.start-top{
+  height:56px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 12px;
+  color:#fff;
+  font-weight:700;
+  font-size:18px;
+  background:linear-gradient(to bottom,#4b90e6 0%,#2a67d1 100%);
+  border-bottom:1px solid rgba(255,255,255,.35);
+}
+
+.start-user-avatar{
+  width:42px;
+  height:42px;
+  border-radius:6px;
+  background:#fff;
+  padding:2px;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.15);
+  flex-shrink:0;
+}
+.start-menu.visible{
+  display:block;
+}
+.start-user-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:4px;
+  display:block;
+}
+
+.start-user-name{
+  font-size:16px;
+  line-height:1;
+}
+
+.start-body{
+  height:calc(100% - 56px - 52px);
+  background:#ffffff;
+  padding:10px 0;
+}
+
+.start-right{
+  width:100%;
+  height:100%;
+  padding:0 10px;
+  box-sizing:border-box;
+}
+
+.start-item{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:9px 10px;
+  border-radius:4px;
+  cursor:pointer;
+  transition:background .15s ease;
+}
+
+.start-item:hover{
+  background:linear-gradient(to bottom,#2d89ef 0%,#1666d3 100%);
+  color:#fff;
+}
+
+.start-item:hover .start-subtle{
+  color:#eef5ff;
+}
+
+.start-item-icon{
+  width:28px;
+  min-width:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  line-height:1;
+  margin-top:1px;
+}
+
+.start-item-text{
+  flex:1;
+  min-width:0;
+}
+
+.start-item-title{
+  font-size:14px;
+  font-weight:700;
+  line-height:1.15;
+  margin-bottom:2px;
+}
+
+.start-subtle{
+  font-size:12px;
+  color:#6a6a6a;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.start-group-sep{
+  height:1px;
+  margin:8px 10px;
+  background:#d7d7d7;
+}
+
+.start-bottom{
+  height:52px;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  padding:0 12px;
+  background:linear-gradient(to bottom,#dbe8fb 0%,#c3d8fa 100%);
+  border-top:1px solid #9fbdf2;
+}
+
+.start-power{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  font-size:12px;
+  font-weight:600;
+  color:#1f1f1f;
+  border:1px solid transparent;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+.start-power:hover{
+  background:#fff;
+  border-color:#7aa7e7;
+}
     /* ---- Taskbar ---- */
     .taskbar{
       position:fixed;bottom:0;left:0;right:0;height:30px;z-index:950;display:flex;align-items:center;
@@ -361,7 +513,7 @@
       box-shadow:1px 0 5px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.3);flex-shrink:0;
     }
     .start-btn:hover{filter:brightness(1.1);}
-    .start-btn:active{filter:brightness(.88);box-shadow:1px 0 2px rgba(0,0,0,.4),inset 0 2px 3px rgba(0,0,0,.22);}
+    .start-btn:active,.start-btn.active{filter:brightness(.88);box-shadow:1px 0 2px rgba(0,0,0,.4),inset 0 2px 3px rgba(0,0,0,.22);}
     .start-logo{width:16px;height:16px;flex-shrink:0;}
     .start-text{font-size:13px;font-weight:bold;font-style:italic;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.55);font-family:'Franklin Gothic Medium',Tahoma,Arial,sans-serif;white-space:nowrap;}
     .tb-sep{width:1px;height:20px;background:rgba(0,0,60,.5);box-shadow:1px 0 0 rgba(255,255,255,.14);margin:0 3px;flex-shrink:0;}
@@ -392,7 +544,7 @@
 
   <div class="greeting">Hi, I am Rouri 🐾</div>
 
-  <div class="desktop-icons">
+  <div class="desktop-icons" id="desktopArea">
     <div class="icon" id="icon-music" ondblclick="openWmp()" onclick="selectIcon(this)">
       <div class="icon-img">🎵</div>
       <div class="icon-label">Listen To My<br>Musics</div>
@@ -447,6 +599,98 @@
     <div class="icon" id="icon-about" ondblclick="openDialog('aboutDesktopDialog')" onclick="selectIcon(this)">
       <div class="icon-img">💬</div>
       <div class="icon-label">About This<br>Desktop</div>
+    </div>
+  </div>
+
+  <!-- Start Menu -->
+  <div class="start-menu" id="startMenu">
+    <div class="start-top">
+      <div class="start-user-avatar">
+        <img src="images/profile.jpg" alt="Rouri avatar">
+      </div>
+      <div class="start-user-name">Rouri</div>
+    </div>
+
+    <div class="start-body">
+  <div class="start-right">
+    <div class="start-item" onclick="openProfile(); closeStartMenu();">
+      <div class="start-item-icon">👤</div>
+      <div class="start-item-text">
+        <div class="start-item-title">My Profile</div>
+        <div class="start-subtle">Content Creator</div>
+      </div>
+    </div>
+
+    <div class="start-item" onclick="openSimpleWindow('docs'); closeStartMenu();">
+      <div class="start-item-icon">📁</div>
+      <div class="start-item-text">
+        <div class="start-item-title">My Documents</div>
+        <div class="start-subtle">lyrics.txt, notes.txt...</div>
+      </div>
+    </div>
+
+    <div class="start-item" onclick="openSimpleWindow('computer'); closeStartMenu();">
+      <div class="start-item-icon">🖥️</div>
+      <div class="start-item-text">
+        <div class="start-item-title">My Computer</div>
+        <div class="start-subtle">Drives and storage</div>
+      </div>
+    </div>
+
+    <div class="start-item" onclick="openSimpleWindow('bin'); closeStartMenu();">
+      <div class="start-item-icon">🗑️</div>
+      <div class="start-item-text">
+        <div class="start-item-title">Recycle Bin</div>
+        <div class="start-subtle">Currently empty</div>
+      </div>
+    </div>
+
+    <div class="start-group-sep"></div>
+
+    <div class="start-item" onclick="openWmp(); closeStartMenu();">
+      <div class="start-item-icon">🎵</div>
+      <div class="start-item-text">
+        <div class="start-item-title">Music Player</div>
+        <div class="start-subtle">Now playing list</div>
+      </div>
+    </div>
+
+    <div class="start-item" onclick="openBrowser('yt'); closeStartMenu();">
+      <div class="start-item-icon">▶️</div>
+      <div class="start-item-text">
+        <div class="start-item-title">YouTube</div>
+        <div class="start-subtle">@Rouriqwq</div>
+      </div>
+    </div>
+
+    <div class="start-item" onclick="openBrowser('bili'); closeStartMenu();">
+      <div class="start-item-icon">📺</div>
+      <div class="start-item-text">
+        <div class="start-item-title">Bilibili</div>
+        <div class="start-subtle">UP space</div>
+      </div>
+    </div>
+
+    <div class="start-group-sep"></div>
+
+    <div class="start-item" onclick="openDialog('aboutDesktopDialog'); closeStartMenu();">
+      <div class="start-item-icon">💬</div>
+      <div class="start-item-text">
+        <div class="start-item-title">About This Desktop</div>
+        <div class="start-subtle">XP-style personal page</div>
+      </div>
+    </div>
+  </div>
+</div>
+    </div>
+
+    <div class="start-bottom">
+      <div class="start-power" onclick="openDialog('unfinishedDialog'); closeStartMenu();">
+        <span>🔒</span><span>Log Off</span>
+      </div>
+      <div class="start-power" onclick="openDialog('fakeNetDialog'); closeStartMenu();">
+        <span>⏻</span><span>Turn Off Computer</span>
+      </div>
     </div>
   </div>
 
@@ -970,7 +1214,7 @@
 
   <!-- Taskbar -->
   <div class="taskbar" id="taskbar">
-    <div class="start-btn" id="startBtn">
+    <div class="start-btn" id="startBtn" onclick="toggleStartMenu(event)">
       <svg class="start-logo" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
         <rect x="1" y="1" width="6.5" height="6.5" fill="#ff3a00" rx="0.5"/>
         <rect x="8.5" y="1" width="6.5" height="6.5" fill="#00cc00" rx="0.5"/>
@@ -1142,6 +1386,24 @@
     updateClock();
     setInterval(updateClock,1000);
 
+    // Start Menu
+    const startMenu = document.getElementById('startMenu');
+    const startBtn = document.getElementById('startBtn');
+
+    function openStartMenu(){
+      startMenu.classList.add('visible');
+      startBtn.classList.add('active');
+    }
+    function closeStartMenu(){
+      startMenu.classList.remove('visible');
+      startBtn.classList.remove('active');
+    }
+    function toggleStartMenu(e){
+      e.stopPropagation();
+      if(startMenu.classList.contains('visible')) closeStartMenu();
+      else openStartMenu();
+    }
+
     // WMP
     const wmpEl = document.getElementById('wmp');
     const tb = document.getElementById('wmpTitlebar');
@@ -1170,6 +1432,7 @@
       }
     }
     function openWmp(){
+      closeStartMenu();
       wmpEl.classList.add('visible'); wmpOpen=true; wmpMinimized=false;
       addTbarBtn('wmp','🎵','Windows Media Player',toggleWmpWindow); setTbarBtnPressed('wmp',true);
     }
@@ -1191,6 +1454,7 @@
       bili: { icon:'📺', label:'Bilibili' }
     };
     function openBrowser(id){
+      closeStartMenu();
       const b=BROWSERS[id], el=document.getElementById('bwin-'+id);
       el.classList.add('visible'); b.open=true; b.minimized=false;
       addTbarBtn('bwin-'+id,BROWSER_META[id].icon,BROWSER_META[id].label,()=>toggleBrowserWindow(id));
@@ -1238,7 +1502,7 @@
     document.addEventListener('mousemove',e=>{ if(!pdrag)return; profileEl.style.left=Math.max(0,Math.min(window.innerWidth-profileEl.offsetWidth,e.clientX-pdx))+'px'; profileEl.style.top=Math.max(0,Math.min(window.innerHeight-50,e.clientY-pdy))+'px'; });
     document.addEventListener('mouseup',()=>pdrag=false);
 
-    function openProfile(){ profileEl.classList.add('visible'); profileOpen=true; profileMinimized=false; addTbarBtn('profile','👤','My Profile',toggleProfileWindow); setTbarBtnPressed('profile', true); }
+    function openProfile(){ closeStartMenu(); profileEl.classList.add('visible'); profileOpen=true; profileMinimized=false; addTbarBtn('profile','👤','My Profile',toggleProfileWindow); setTbarBtnPressed('profile', true); }
     function closeProfile(){ profileEl.classList.remove('visible','maximized'); profileOpen=false; profileMinimized=false; profileMaximized=false; document.getElementById('pmax-profile').textContent='□'; removeTbarBtn('profile'); }
     function minimizeProfile(){ profileEl.classList.remove('visible'); profileMinimized=true; setTbarBtnPressed('profile', false); }
     function toggleProfileWindow(){ if(!profileOpen)return; if(profileMinimized){ profileEl.classList.add('visible'); profileMinimized=false; setTbarBtnPressed('profile', true); } else minimizeProfile(); }
@@ -1278,6 +1542,7 @@
     });
 
     function openSimpleWindow(key){
+      closeStartMenu();
       const meta=SIMPLE_WINS[key], el=document.getElementById(meta.id);
       el.classList.add('visible'); meta.open=true; meta.minimized=false;
       addTbarBtn('simple-'+key, meta.icon, meta.label, ()=>toggleSimpleWindow(key));
@@ -1313,7 +1578,7 @@
     }
 
     // Dialog / Balloon
-    function openDialog(id){ document.getElementById(id).classList.add('visible'); }
+    function openDialog(id){ closeStartMenu(); document.getElementById(id).classList.add('visible'); }
     function closeDialog(id){ document.getElementById(id).classList.remove('visible'); }
     function showBalloon(){ document.getElementById('musicBalloon').classList.add('visible'); }
     function hideBalloon(){ document.getElementById('musicBalloon').classList.remove('visible'); }
@@ -1353,6 +1618,12 @@
 
     ['icon-music','icon-yt','icon-bili','icon-profile','icon-computer','icon-docs','icon-bin','icon-about']
       .forEach(id=>makeIconDraggable(document.getElementById(id)));
+
+    // click outside start menu closes it
+    document.addEventListener('click', (e) => {
+      const clickedInsideStart = startMenu.contains(e.target) || startBtn.contains(e.target);
+      if(!clickedInsideStart) closeStartMenu();
+    });
 
     // startup effects
     setTimeout(()=>openDialog('welcomeDialog'), 700);
