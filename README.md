@@ -1,3 +1,5 @@
+<img width="1920" height="945" alt="af6c5d8cd90324c3bd07d9aebc535b74" src="https://github.com/user-attachments/assets/71f3da2c-b24c-4378-b26d-b211cdbf8b97" />
+
 # Windows XP-Inspired Portfolio Website
 
 A personal portfolio website inspired by the classic Windows XP desktop aesthetic.  
